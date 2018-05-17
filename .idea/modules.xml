@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/TrajectorMapProj.iml" filepath="$PROJECT_DIR$/TrajectorMapProj.iml" />
+      <module fileurl="file://$PROJECT_DIR$/trajector-map-api/trajector-map-api.iml" filepath="$PROJECT_DIR$/trajector-map-api/trajector-map-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/trajector-map-web/trajector-map-web.iml" filepath="$PROJECT_DIR$/trajector-map-web/trajector-map-web.iml" />
+    </modules>
+  </component>
+</project>
