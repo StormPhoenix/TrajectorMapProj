@@ -13,8 +13,10 @@ public class Constants {
     public static final String COLUMN_NAME_TIMESTAMP = "timestamp";
     public static final String COLUMN_NAME_LATITUDE = "latitude";
     public static final String COLUMN_NAME_LONGITUDE = "longitude";
-
-
+    public static final String COLUMN_NAME_CITY_ID = "city_id";
+    public static final String COLUMN_NAME_CITY_NAME = "city_name";
+    public static final String COLUMN_NAME_GRID_ID = "city_grid_id";
+    public static final String TABLE_NAME_CITY_NAME = "city_name";
     public static final String END_POINT = "https://GPS-Sample2.cn-hangzhou.ots.aliyuncs.com";
     public static final String ACCESS_KEY_ID = "LTAIfcYPIEOTQTdO";
     public static final String ACCESS_KEY_SECRET = "fzGryKL57qkathfilUa2uUPDgtiEVN";

@@ -1,7 +1,5 @@
 package com.stormphoenix.graduatedesign.algorithms;
 
-import org.apache.el.lang.ELArithmetic;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,7 +27,7 @@ public class GeometryAlgorithms {
                 case CUR_POT_OUT_START:
                     break;
                 case CUR_POT_IN_PRE_IN:
-                    result.get(result.size() - 1).addPoint(currentPoint);
+                    result.get(result.size() - 1).addPoints(currentPoint);
                     break;
                 case CUR_POT_IN_PRE_OUT:
                     result.add(
@@ -41,7 +39,7 @@ public class GeometryAlgorithms {
                                             SegmentRectStatus.CUR_POT_IN_PRE_OUT)));
                     break;
                 case CUR_POT_OUT_PRE_IN:
-                    result.get(result.size() - 1).addPoint(
+                    result.get(result.size() - 1).addPoints(
                             calculateNewPoints(
                                     path.getPoint(prePointIndex),
                                     path.getPoint(currentPointIndex),
@@ -49,14 +47,15 @@ public class GeometryAlgorithms {
                                     SegmentRectStatus.CUR_POT_OUT_PRE_IN));
                     break;
                 case CUR_POT_OUT_PRE_OUT:
-                    result.add(
-                            createNewPath(
-                                    calculateNewPoints(
-                                            path.getPoint(prePointIndex),
-                                            path.getPoint(currentPointIndex),
-                                            rect,
-                                            SegmentRectStatus.CUR_POT_OUT_PRE_OUT)));
                     break;
+//                    result.add(
+//                            createNewPath(
+//                                    calculateNewPoints(
+//                                            path.getPoint(prePointIndex),
+//                                            path.getPoint(currentPointIndex),
+//                                            rect,
+//                                            SegmentRectStatus.CUR_POT_OUT_PRE_OUT)));
+//                    break;
                 default:
                     break;
             }
@@ -322,7 +321,7 @@ public class GeometryAlgorithms {
         if (currentPoints != null) {
             for (Point point : currentPoints) {
                 if (point != null) {
-                    path.addPoint(point);
+                    path.addPoints(point);
                 }
             }
         }
@@ -336,7 +335,7 @@ public class GeometryAlgorithms {
     private static Path createNewPath(Point currentPoint) {
         Path path = new Path();
         if (currentPoint != null) {
-            path.addPoint(currentPoint);
+            path.addPoints(currentPoint);
         }
         return path;
     }

@@ -13,16 +13,28 @@ public class Path {
         points = new LinkedList();
     }
 
-    public void addPoint(List<Point> points) {
-        addPoint((Point[]) points.toArray());
+    public void addPoint(Point point) {
+        points.add(point);
     }
 
-    public void addPoint(Point... points) {
+    public void addPoints(List<Point> points) {
         if (points != null) {
             for (Point point : points) {
                 this.points.add(point);
             }
         }
+    }
+
+    public void addPoints(Point... points) {
+        if (points != null) {
+            for (Point point : points) {
+                this.points.add(point);
+            }
+        }
+    }
+
+    public List<Point> getPoints() {
+        return points;
     }
 
     public Point getPoint(int index) {

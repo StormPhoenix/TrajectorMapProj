@@ -7,29 +7,53 @@
     <meta charset="utf-8">
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
     <title>轨迹展示&巡航</title>
-    <style>
-        html,
-        body,
-        #container {
-            width: 100%;
-            height: 100%;
-            margin: 0px;
-        }
+    <link rel="stylesheet" type="text/css" href="//webmap1.bdimg.com/wolfman/static/common/css/bmap.min_86c9bf0.css"/>
+    <link rel="stylesheet" type="text/css" href="//webmap1.bdimg.com/wolfman/static/common/pkg/index_9f0d4f0.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="//webmap1.bdimg.com/wolfman/static/pano/widget/module/PoiSearchModule/PoiSearchModule_d3821e9.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="//webmap1.bdimg.com/wolfman/static/common/widget/ui/prompt/prompt_5b31ddb.css"/>
+</head>
+<style>
+    html,
+    body,
+    #container {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+    }
 
-        #loadingTip {
-            position: absolute;
-            z-index: 9999;
-            top: 0;
-            left: 0;
-            padding: 3px 10px;
-            background: red;
-            color: #fff;
-            font-size: 14px;
-        }
-    </style>
+    #loadingTip {
+        position: absolute;
+        z-index: 9999;
+        top: 0;
+        left: 0;
+        padding: 3px 10px;
+        background: red;
+        color: #fff;
+        font-size: 14px;
+    }
+</style>
 </head>
 
 <body>
+<!--<div id="searchbox" class="clearfix">-->
+    <!--<div id="searchbox-container">-->
+        <!--<div id="sole-searchbox-content" class="searchbox-content">-->
+            <!--<input id="sole-input" class="searchbox-content-common" type="text" name="word" autocomplete="off" maxlength="256" placeholder="搜地点、查公交、找路线" value="" />-->
+            <!--<div class="input-clear" title="清空"></div>-->
+            <!--<div class="searchbox-content-button right-button route-button loading-button" data-title="路线">-->
+            <!--</div>-->
+        <!--</div>-->
+    <!--</div>-->
+    <!--<button id="search-button" data-title="搜索"></button>-->
+    <!--<div id="toast-wrapper">-->
+        <!--<div id="toast">-->
+            <!--<img class="info-tip-img" src="/wolfman/static/common/images/transparent.gif" alt="" />-->
+            <!--<span class="info-tip-text"></span>-->
+        <!--</div>-->
+    <!--</div>-->
+<!--</div>-->
 <div id="container"></div>
 <script type="text/javascript" src='//webapi.amap.com/maps?v=1.4.6&key=453100f53a2852b043c4bbe00fcad34c'></script>
 <!-- UI组件库 1.0 -->
@@ -103,7 +127,8 @@
 
 //        $.getJSON('http://a.amap.com/amap-ui/static/data/big-routes.json', function(d) {
 //        $.getJSON('http://localhost:8082/example_data', function(d) {
-        $.getJSON('http://localhost:8082/user_and_time_scope?user_id=0&start_time=1228186642000&end_time=1228188888000', function (d) {
+//        $.getJSON('http://localhost:8082/user_and_time_scope?user_id=0&start_time=1228318146000&end_time=1228318936000', function (d) {
+        $.getJSON('http://localhost:8082/time_and_region_scope?start_time=1228318146000&end_time=1228318936000&top_latitude=40.000000&bottom_latitude=39.970000&left_longitude=116.332404&right_longitude=116.417492', function (d) {
 
             $('#loadingTip').remove();
 

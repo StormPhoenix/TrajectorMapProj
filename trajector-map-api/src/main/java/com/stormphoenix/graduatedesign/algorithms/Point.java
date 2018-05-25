@@ -4,8 +4,8 @@ package com.stormphoenix.graduatedesign.algorithms;
  * Created by Developer on 18-5-15.
  */
 public class Point {
-    private Double x;
-    private Double y;
+    private Double x = null;
+    private Double y = null;
 
     public Point() {
         this(0D, 0D);
