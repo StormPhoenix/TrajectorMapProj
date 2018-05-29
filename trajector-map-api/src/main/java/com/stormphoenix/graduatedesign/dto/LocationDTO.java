@@ -7,7 +7,11 @@ import lombok.Data;
  */
 @Data
 public class LocationDTO {
-    private Long timestamp;
     private Double latitude;
     private Double longitude;
+    private Long timestamp;
+    // extra data
+    private String userName;
+    private Long userId;
+    private Long trajectoryId;
 }

@@ -6,6 +6,8 @@ package com.stormphoenix.graduatedesign.algorithms;
 public class Point {
     private Double x = null;
     private Double y = null;
+    // 用于存储额外数据，由应用程序自己定义
+    private Object tag;
 
     public Point() {
         this(0D, 0D);
@@ -30,5 +32,13 @@ public class Point {
 
     public void setY(Double y) {
         this.y = y;
+    }
+
+    public Object getTag() {
+        return tag;
+    }
+
+    public void setTag(Object tag) {
+        this.tag = tag;
     }
 }

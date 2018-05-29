@@ -18,9 +18,14 @@ public class VOConverter {
     public static List<LocationDTO> convertPointsToLocations(List<Point> points) {
         List<LocationDTO> locationDTOList = new ArrayList();
         for (Point point : points) {
-            LocationDTO locationDTO = new LocationDTO();
-            locationDTO.setLongitude(point.getX());
-            locationDTO.setLatitude(point.getY());
+            LocationDTO locationDTO;
+            if (point.getTag() != null && point.getTag() instanceof LocationDTO) {
+                locationDTO = (LocationDTO) point.getTag();
+            } else {
+                locationDTO = new LocationDTO();
+                locationDTO.setLongitude(point.getX());
+                locationDTO.setLatitude(point.getY());
+            }
             locationDTOList.add(locationDTO);
         }
         return locationDTOList;
@@ -41,13 +46,24 @@ public class VOConverter {
         for (Path path : paths) {
             trajectorDTO = new TrajectorDTO();
             // TODO trajectorDTO.setTrajectoryId(?)
-            trajectorDTO.setTrajectoryId(null);
             trajectorDTO.setLocations(new ArrayList());
             for (Point point : path.getPoints()) {
-                LocationDTO locationDTO = new LocationDTO();
-                locationDTO.setTimestamp(null);
-                locationDTO.setLongitude(point.getX());
-                locationDTO.setLatitude(point.getY());
+                LocationDTO locationDTO;
+                if (point.getTag() != null && point.getTag() instanceof LocationDTO) {
+                    locationDTO = (LocationDTO) point.getTag();
+                } else {
+                    locationDTO = new LocationDTO();
+                }
+                // TODO 下面一行代码不太优雅，以后再修改
+                trajectorDTO.setTrajectoryId(locationDTO.getTrajectoryId());
+                if (point.getTag() == null || !(point.getTag() instanceof LocationDTO)) {
+                    locationDTO.setUserName(((LocationDTO) point.getTag()).getUserName());
+                    locationDTO.setUserId(((LocationDTO) point.getTag()).getUserId());
+                    locationDTO.setTrajectoryId(((LocationDTO) point.getTag()).getTrajectoryId());
+                    locationDTO.setTimestamp(((LocationDTO) point.getTag()).getTimestamp());
+                    locationDTO.setLongitude(point.getX());
+                    locationDTO.setLatitude(point.getY());
+                }
                 trajectorDTO.getLocations().add(locationDTO);
             }
             userTrajectoryDTO.getTrajectories().add(trajectorDTO);
@@ -64,8 +80,11 @@ public class VOConverter {
         Path path;
         for (TrajectorDTO trajectorDTO : userTrajectoryDTO.getTrajectories()) {
             path = new Path();
+            Point point;
             for (LocationDTO locationDTO : trajectorDTO.getLocations()) {
-                path.addPoint(new Point(locationDTO.getLatitude(), locationDTO.getLongitude()));
+                point = new Point(locationDTO.getLongitude(), locationDTO.getLatitude());
+                point.setTag(locationDTO);
+                path.addPoint(point);
             }
             result.add(path);
         }
@@ -78,8 +97,11 @@ public class VOConverter {
      */
     public static Path convertTrajectorDTO2Path(TrajectorDTO trajectorDTO) {
         Path resultPath = new Path();
+        Point point;
         for (LocationDTO locationDTO : trajectorDTO.getLocations()) {
-            resultPath.addPoint(new Point(locationDTO.getLongitude(), locationDTO.getLatitude()));
+            point = new Point(locationDTO.getLongitude(), locationDTO.getLatitude());
+            point.setTag(locationDTO);
+            resultPath.addPoint(point);
         }
         return resultPath;
     }
@@ -90,12 +112,12 @@ public class VOConverter {
             TrajectorPathVO pathVO = new TrajectorPathVO();
             pathVO.setName(String.valueOf(dto.getUserId()));
             List<List<Double>> path = new ArrayList();
-            List<Double> point;
+            List<Double> points;
             for (LocationDTO locationDTO : trajectorDTO.getLocations()) {
-                point = new ArrayList();
-                point.add(locationDTO.getLongitude());
-                point.add(locationDTO.getLatitude());
-                path.add(point);
+                points = new ArrayList();
+                points.add(locationDTO.getLongitude());
+                points.add(locationDTO.getLatitude());
+                path.add(points);
             }
             pathVO.setPath(path);
             result.add(pathVO);

@@ -2,7 +2,6 @@ package com.stormphoenix.graduatedesign.controller;
 
 import com.alicloud.openservices.tablestore.model.*;
 import com.stormphoenix.graduatedesign.algorithms.GeometryAlgorithms;
-import com.stormphoenix.graduatedesign.algorithms.Path;
 import com.stormphoenix.graduatedesign.algorithms.Rectangle;
 import com.stormphoenix.graduatedesign.constants.Constants;
 import com.stormphoenix.graduatedesign.dto.LocationDTO;
@@ -11,7 +10,10 @@ import com.stormphoenix.graduatedesign.dto.UserTrajectoryDTO;
 import com.stormphoenix.graduatedesign.service.RedisService;
 import com.stormphoenix.graduatedesign.utils.VOConverter;
 import com.stormphoenix.graduatedesign.vo.TrajectorPathVO;
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.springframework.web.bind.annotation.*;
+import scala.Tuple2;
 
 import javax.annotation.Resource;
 import java.io.*;
@@ -21,6 +23,10 @@ import static com.stormphoenix.graduatedesign.constants.Constants.*;
 
 /**
  * Created by Developer on 18-5-10.
+ * <p>
+ * 遗留的一些问题：
+ * pathByTimeScope 方法里面的对数据的计算需要进行优化：
+ * １．占用内存过大。对数据的计算不是对原有数据进行计算，而是新创建了一批数据进行计算，这里需要优化
  */
 @RestController
 @CrossOrigin
@@ -159,7 +165,8 @@ public class TrajectorController {
             Long userId = row.getPrimaryKey().getPrimaryKeyColumn(COLUMN_NAME_USER_ID).getValue().asLong();
             Long trajectorId = row.getPrimaryKey().getPrimaryKeyColumn(COLUMN_NAME_TRAJECTORY_ID).getValue().asLong();
             Long timestamp = row.getPrimaryKey().getPrimaryKeyColumn(COLUMN_NAME_TIMESTAMP).getValue().asLong();
-            Double latitude = null, longitude = null;
+            Double latitude = null;
+            Double longitude = null;
             for (Column column : row.getColumns()) {
                 if (column.getName().equals(Constants.COLUMN_NAME_LATITUDE)) {
                     latitude = column.getValue().asDouble();
@@ -175,12 +182,14 @@ public class TrajectorController {
                 trajectorIdTrajectorDtoMap = new HashMap();
                 userIdTrajectoriesDtoMap.put(userId, trajectorIdTrajectorDtoMap);
             }
+
             TrajectorDTO tempTrajectDto;
             if (trajectorIdTrajectorDtoMap.containsKey(trajectorId)) {
                 tempTrajectDto = trajectorIdTrajectorDtoMap.get(trajectorId);
             } else {
                 tempTrajectDto = new TrajectorDTO();
                 tempTrajectDto.setTrajectoryId(trajectorId);
+                tempTrajectDto.setUserId(userId);
                 tempTrajectDto.setLocations(new LinkedList());
                 trajectorIdTrajectorDtoMap.put(trajectorId, tempTrajectDto);
             }
@@ -188,10 +197,13 @@ public class TrajectorController {
             locationDTO.setTimestamp(timestamp);
             locationDTO.setLatitude(latitude);
             locationDTO.setLongitude(longitude);
+            // TODO locationDTO.setUserName();
+            locationDTO.setUserId(userId);
+            locationDTO.setTrajectoryId(trajectorId);
             tempTrajectDto.getLocations().add(locationDTO);
         }
         // userIdTrajectoriesDtoMap 初始化完毕
-        List<UserTrajectoryDTO> userTrajectoryDtoList = new ArrayList();
+        List<UserTrajectoryDTO> userTrajectoryDTOList = new ArrayList();
         Iterator<Map.Entry<Long, Map<Long, TrajectorDTO>>> iterator = userIdTrajectoriesDtoMap.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Long, Map<Long, TrajectorDTO>> entry = iterator.next();
@@ -208,7 +220,7 @@ public class TrajectorController {
             userTrajectoryDTO.setUserId(userId);
             // TODO userTrajectoryDTO.setUserName();
             userTrajectoryDTO.setTrajectories(trajectorDTOList);
-            userTrajectoryDtoList.add(userTrajectoryDTO);
+            userTrajectoryDTOList.add(userTrajectoryDTO);
         }
         // 将 userTrajectoryDtoList　转化成 Path 切分
         Rectangle rectangle = new Rectangle();
@@ -216,22 +228,65 @@ public class TrajectorController {
         rectangle.setRightX(rightLongitude);
         rectangle.setTopY(topLatitude);
         rectangle.setBottomY(bottomLatitude);
-        for (UserTrajectoryDTO userTrajectoryDTO : userTrajectoryDtoList) {
-            List<TrajectorDTO> trajectorDTOList = new ArrayList();
-            for (TrajectorDTO trajectorDTO : userTrajectoryDTO.getTrajectories()) {
-                Path path = VOConverter.convertTrajectorDTO2Path(trajectorDTO);
-                List<Path> cutPaths = GeometryAlgorithms.cutPathByRect(path, rectangle);
-                for (Path cutPath : cutPaths) {
-                    TrajectorDTO cutTrajectorDTO = new TrajectorDTO();
-                    cutTrajectorDTO.setTrajectoryId(trajectorDTO.getTrajectoryId());
-                    cutTrajectorDTO.setLocations(VOConverter.convertPointsToLocations(cutPath.getPoints()));
-                    trajectorDTOList.add(cutTrajectorDTO);
-                }
-            }
-            userTrajectoryDTO.setTrajectories(trajectorDTOList);
-        }
+
+        /** 以下是没有使用 spark 的计算过程 **/
+        SparkConf conf = new SparkConf().setMaster("local").setAppName("Trajector API");
+        JavaSparkContext sparkContext = new JavaSparkContext(conf);
+        userTrajectoryDTOList =
+                sparkContext.parallelize(userTrajectoryDTOList)
+                        .flatMap(userTrajectoryDTO -> userTrajectoryDTO.getTrajectories().iterator())
+                        .map(trajectorDTO -> VOConverter.convertTrajectorDTO2Path(trajectorDTO))
+                        .flatMap(path -> GeometryAlgorithms.cutPathByRect(path, rectangle).iterator()).filter(path -> path.getPoints() != null && path.getPoints().size() > 0)
+                        .map(path -> {
+                            List<LocationDTO> locationDTOList = VOConverter.convertPointsToLocations(path.getPoints());
+//                             create TrajectorDTO
+                            TrajectorDTO trajectorDTO = new TrajectorDTO();
+                            Long userId = locationDTOList.get(0).getUserId();
+                            String userName = locationDTOList.get(0).getUserName();
+                            Long trajectoryId = locationDTOList.get(0).getTrajectoryId();
+                            trajectorDTO.setUserId(userId);
+                            trajectorDTO.setUserName(userName);
+                            trajectorDTO.setTrajectoryId(trajectoryId);
+                            trajectorDTO.setLocations(locationDTOList);
+                            return trajectorDTO;
+                        })
+                        .mapToPair(trajectorDTO -> new Tuple2<>(trajectorDTO.getUserId(), Arrays.asList(trajectorDTO)))
+                        .reduceByKey(
+                                (List<TrajectorDTO> trajectorDTOS, List<TrajectorDTO> trajectorDTOS2) -> {
+                                    trajectorDTOS.addAll(trajectorDTOS2);
+                                    return trajectorDTOS;
+                                })
+                        .map(longListTuple2 -> {
+                            Long userId = longListTuple2._1();
+                            List<TrajectorDTO> trajectorDTOList = longListTuple2._2();
+                            String userName = trajectorDTOList.get(0).getUserName();
+
+                            UserTrajectoryDTO userTrajectoryDTO = new UserTrajectoryDTO();
+                            userTrajectoryDTO.setUserId(userId);
+                            userTrajectoryDTO.setUserName(userName);
+                            userTrajectoryDTO.setTrajectories(trajectorDTOList);
+                            return userTrajectoryDTO;
+                        }).collect();
+        /** 以上是没有使用 spark 的计算过程 **/
+
+        /** 以下是没有使用 spark 的计算过程 **/
+//        for (UserTrajectoryDTO userTrajectoryDTO : userTrajectoryDTOList) {
+//            List<TrajectorDTO> trajectorDTOList = new ArrayList();
+//            for (TrajectorDTO trajectorDTO : userTrajectoryDTO.getTrajectories()) {
+//                Path path = VOConverter.convertTrajectorDTO2Path(trajectorDTO);
+//                List<Path> cutPaths = GeometryAlgorithms.cutPathByRect(path, rectangle);
+//                for (Path cutPath : cutPaths) {
+//                    TrajectorDTO cutTrajectorDTO = new TrajectorDTO();
+//                    cutTrajectorDTO.setTrajectoryId(trajectorDTO.getTrajectoryId());
+//                    cutTrajectorDTO.setLocations(VOConverter.convertPointsToLocations(cutPath.getPoints()));
+//                    trajectorDTOList.add(cutTrajectorDTO);
+//                }
+//            }
+//            userTrajectoryDTO.setTrajectories(trajectorDTOList);
+//        }
+        /** 以上是没有使用 spark 的计算过程 **/
         List<TrajectorPathVO> result = new ArrayList();
-        for (UserTrajectoryDTO userTrajectoryDTO : userTrajectoryDtoList) {
+        for (UserTrajectoryDTO userTrajectoryDTO : userTrajectoryDTOList) {
             result.addAll(VOConverter.convertUserTrajectorDTO2TrajectorPathVO(userTrajectoryDTO));
         }
         redisService.putRedisTimeRegionValue(startTime, endTime, topLatitude, bottomLatitude, leftLongitude, rightLongitude, result);

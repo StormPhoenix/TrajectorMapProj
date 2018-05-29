@@ -3,14 +3,17 @@ package com.stormphoenix.graduatedesign;
 import com.alicloud.openservices.tablestore.SyncClient;
 import com.alicloud.openservices.tablestore.model.*;
 import com.stormphoenix.graduatedesign.constants.Constants;
+import com.stormphoenix.graduatedesign.hotpoint.HotpointMap;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.util.List;
 
 @RunWith(SpringRunner.class)
+@WebAppConfiguration
 @SpringBootTest
 public class TrajectorMapApiApplicationTests {
 
@@ -57,6 +60,58 @@ public class TrajectorMapApiApplicationTests {
         for (Row row : rows) {
             List<Column> columns = row.getColumn(Constants.COLUMN_NAME_LATITUDE);
             System.out.println();
+        }
+    }
+
+    @Test
+    public void test() {
+        System.out.println("hello world");
+    }
+
+    @Test
+    public void showHotpoint() {
+        int threadCount = 500;
+        int count = 0;
+        double widthFrom = 100;
+        double widthEnd = 120;
+        double heightFrom = 100;
+        double heightEnd = 120;
+        double gridScale = 1;
+        int width = (int) ((widthEnd - widthFrom) / gridScale) + 1;
+        int height = (int) ((heightEnd - heightFrom) / gridScale) + 1;
+        HotpointMap hotpointMap = HotpointMap.getInstance(width, height);
+        // 创建 threadCount 个线程向 HotpointMap 提交数据
+        while (count < threadCount) {
+            new Thread(new RandomPositionTask(widthFrom, widthEnd, heightFrom, heightEnd, gridScale, hotpointMap)).start();
+            count++;
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int[][] map;
+                int count = 0;
+                while (count < 100) {
+                    map = hotpointMap.getHotpointMap();
+                    for (int row = 0; row < width; row++) {
+                        for (int col = 0; col < height; col++) {
+                            System.out.print(map[row][col] + " ");
+                        }
+                        System.out.println();
+                    }
+                    System.out.println("--------------------------");
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    count++;
+                }
+            }
+        }).start();
+        try {
+            Thread.currentThread().join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }

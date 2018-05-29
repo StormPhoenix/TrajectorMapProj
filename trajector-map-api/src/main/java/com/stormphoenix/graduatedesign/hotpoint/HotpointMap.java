@@ -4,6 +4,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -13,15 +14,15 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class HotpointMap {
     private static HotpointMap INSTANCE;
-    private static final Long TIME_SCALE = 5000L;
+    private static final Long TIME_SCALE = 20000L;
     private Integer width;
     private Integer height;
     // 初始时候，queueA用作缓存GPS数据
     private volatile Queue<Hotpoint> firstQueue = new ConcurrentLinkedQueue();
     private volatile Queue<Hotpoint> secondQueue = new ConcurrentLinkedQueue();
     // 以下用于同步控制两个队列
-    private volatile Lock firstQueueLock = new ReentrantLock();
-    private volatile Lock secondQueueLock = new ReentrantLock();
+    private volatile Semaphore firstQueueSemaphore = new Semaphore(1, true);
+    private volatile Semaphore secondQueueSemaphore = new Semaphore(1, true);
     private volatile Lock firstMutex = new ReentrantLock();
     private volatile Lock secondMutex = new ReentrantLock();
     private volatile Lock switchLock = new ReentrantLock();
@@ -33,6 +34,7 @@ public class HotpointMap {
 
     private ExecutorService executorService;
 
+    // TODO 这里不能使用单例模式，后期修改
     public static HotpointMap getInstance(int width, int height) {
         if (INSTANCE == null) {
             synchronized (HotpointMap.class) {
@@ -53,16 +55,17 @@ public class HotpointMap {
                 hotpointMap[row][col] = new AtomicInteger(0);
             }
         }
-        executorService = Executors.newFixedThreadPool(3);
+        executorService = Executors.newFixedThreadPool(100);
+        // TODO 暂时注销死锁
         executorService.submit(new Runnable() {
             @Override
             public void run() {
-                pollGpsTask();
+                pollHotpointTask();
             }
         });
     }
 
-    int[][] getCurrentHotpointMap() {
+    public int[][] getHotpointMap() {
         if (hotpointMapResult == null) {
             hotpointMapResult = new int[height][width];
         }
@@ -80,19 +83,14 @@ public class HotpointMap {
         hotpoint.setColIndex(col);
         hotpoint.setRowIndex(row);
         hotpoint.setTimestamp(System.currentTimeMillis());
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                offerGpsTask(hotpoint);
-            }
-        });
+        executorService.submit(() -> offerHotpointTask(hotpoint));
     }
 
     /**
-     * offerGpsTask 和　pollGpsTask 相当于一对读写锁，
+     * offerHotpointTask 和　pollHotpointTask 相当于一对读写锁，
      * 这里暂时采取写锁优先的策略
      */
-    private void offerGpsTask(Hotpoint hotpoint) {
+    private void offerHotpointTask(Hotpoint hotpoint) {
         int count;
         switchLock.lock();
         if (!isSwitch) {
@@ -101,14 +99,19 @@ public class HotpointMap {
             switchLock.unlock();
             count = firstReaderCount.incrementAndGet();
             if (count == 1) {
-                firstQueueLock.lock();
+                try {
+                    firstQueueSemaphore.acquire();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
             firstMutex.unlock();
             firstQueue.offer(hotpoint);
+            hotpointMap[hotpoint.getRowIndex()][hotpoint.getColIndex()].incrementAndGet();
             firstMutex.lock();
             count = firstReaderCount.decrementAndGet();
             if (count == 0) {
-                firstQueueLock.unlock();
+                firstQueueSemaphore.release();
             }
             firstMutex.unlock();
         } else {
@@ -117,35 +120,44 @@ public class HotpointMap {
             switchLock.unlock();
             count = secondReaderCount.incrementAndGet();
             if (count == 1) {
-                secondMutex.lock();
+                secondQueueSemaphore.release();
             }
             secondMutex.unlock();
             secondQueue.offer(hotpoint);
+            hotpointMap[hotpoint.getRowIndex()][hotpoint.getColIndex()].incrementAndGet();
             secondMutex.lock();
             count = secondReaderCount.decrementAndGet();
             if (count == 0) {
-                secondQueueLock.unlock();
+                secondQueueSemaphore.release();
             }
             secondMutex.unlock();
         }
     }
 
-    private void pollGpsTask() {
+    private void pollHotpointTask() {
         while (true) {
             if (isSwitch) {
                 // use firstQueue
-                firstQueueLock.lock();
+                try {
+                    firstQueueSemaphore.acquire();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 while (!firstQueue.isEmpty()) {
                     Hotpoint hotpoint = firstQueue.peek();
-                    if (System.currentTimeMillis() - hotpoint.getTimestamp() >= 5000) {
+                    if (System.currentTimeMillis() - hotpoint.getTimestamp() >= TIME_SCALE) {
                         hotpointMap[hotpoint.getRowIndex()][hotpoint.getColIndex()].decrementAndGet();
                         firstQueue.poll();
                     }
                 }
-                firstQueueLock.unlock();
+                firstQueueSemaphore.release();
             } else {
                 // use secondQueue
-                secondQueueLock.lock();
+                try {
+                    secondQueueSemaphore.acquire();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 while (!secondQueue.isEmpty()) {
                     Hotpoint hotpoint = secondQueue.peek();
                     if (System.currentTimeMillis() - hotpoint.getTimestamp() >= 5000) {
@@ -153,7 +165,7 @@ public class HotpointMap {
                         secondQueue.poll();
                     }
                 }
-                secondQueueLock.unlock();
+                secondQueueSemaphore.release();
             }
             switchLock.lock();
             isSwitch = !isSwitch;
