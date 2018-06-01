@@ -1,5 +1,9 @@
 package com.stormphoenix.graduatedesign.algorithms;
 
+import com.stormphoenix.graduatedesign.algorithms.basic.Path;
+import com.stormphoenix.graduatedesign.algorithms.basic.Point;
+import com.stormphoenix.graduatedesign.algorithms.basic.Rectangle;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;

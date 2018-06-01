@@ -1,7 +1,7 @@
 package com.stormphoenix.graduatedesign.utils;
 
-import com.stormphoenix.graduatedesign.algorithms.Path;
-import com.stormphoenix.graduatedesign.algorithms.Point;
+import com.stormphoenix.graduatedesign.algorithms.basic.Path;
+import com.stormphoenix.graduatedesign.algorithms.basic.Point;
 import com.stormphoenix.graduatedesign.dto.LocationDTO;
 import com.stormphoenix.graduatedesign.dto.TrajectorDTO;
 import com.stormphoenix.graduatedesign.dto.UserTrajectoryDTO;

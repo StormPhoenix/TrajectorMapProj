@@ -2,7 +2,7 @@ package com.stormphoenix.graduatedesign.controller;
 
 import com.alicloud.openservices.tablestore.model.*;
 import com.stormphoenix.graduatedesign.algorithms.GeometryAlgorithms;
-import com.stormphoenix.graduatedesign.algorithms.Rectangle;
+import com.stormphoenix.graduatedesign.algorithms.basic.Rectangle;
 import com.stormphoenix.graduatedesign.constants.Constants;
 import com.stormphoenix.graduatedesign.dto.LocationDTO;
 import com.stormphoenix.graduatedesign.dto.TrajectorDTO;
@@ -322,7 +322,7 @@ public class TrajectorController {
     }
 
     @RequestMapping(value = "/test")
-    public List<TrajectorPathVO> get(@RequestParam("start_time") Long startTime,
+     public List<TrajectorPathVO> get(@RequestParam("start_time") Long startTime,
                                      @RequestParam("end_time") Long endTime,
                                      @RequestParam("top_latitude") Double topLatitude,
                                      @RequestParam("bottom_latitude") Double bottomLatitude,

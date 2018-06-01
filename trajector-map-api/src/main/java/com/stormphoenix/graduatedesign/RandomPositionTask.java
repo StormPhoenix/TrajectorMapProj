@@ -29,13 +29,13 @@ public class RandomPositionTask implements Runnable {
         while (count < 1000) {
             currentWidht = Math.random() * (widthEnd - widthFrom) + widthFrom;
             currentHeight = Math.random() * (heightEnd - heightFrom) + heightFrom;
-            hotpointMap.addHotpoint((int) ((currentHeight - heightFrom) / gridScale) + 1, (int) ((currentWidht - widthFrom) / gridScale) + 1);
+            hotpointMap.addHotpoint((int) ((currentHeight - heightFrom) / gridScale), (int) ((currentWidht - widthFrom) / gridScale));
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            count ++;
+            count++;
         }
     }
 }

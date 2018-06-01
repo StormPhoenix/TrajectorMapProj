@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class HotpointMap {
     private static HotpointMap INSTANCE;
-    private static final Long TIME_SCALE = 20000L;
+    private static final Long TIME_SCALE = 5000L;
     private Integer width;
     private Integer height;
     // 初始时候，queueA用作缓存GPS数据
@@ -56,7 +56,6 @@ public class HotpointMap {
             }
         }
         executorService = Executors.newFixedThreadPool(100);
-        // TODO 暂时注销死锁
         executorService.submit(new Runnable() {
             @Override
             public void run() {

@@ -1,4 +1,4 @@
-package com.stormphoenix.graduatedesign.algorithms;
+package com.stormphoenix.graduatedesign.algorithms.basic;
 
 /**
  * Created by Developer on 18-5-15.

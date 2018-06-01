@@ -1,4 +1,4 @@
-package com.stormphoenix.graduatedesign.algorithms;
+package com.stormphoenix.graduatedesign.algorithms.basic;
 
 import java.util.LinkedList;
 import java.util.List;

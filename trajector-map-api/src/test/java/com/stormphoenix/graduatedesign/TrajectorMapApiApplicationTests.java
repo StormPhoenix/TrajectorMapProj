@@ -64,13 +64,8 @@ public class TrajectorMapApiApplicationTests {
     }
 
     @Test
-    public void test() {
-        System.out.println("hello world");
-    }
-
-    @Test
     public void showHotpoint() {
-        int threadCount = 500;
+        int threadCount = 5000;
         int count = 0;
         double widthFrom = 100;
         double widthEnd = 120;
