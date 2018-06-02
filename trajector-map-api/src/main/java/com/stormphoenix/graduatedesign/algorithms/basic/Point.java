@@ -6,7 +6,7 @@ package com.stormphoenix.graduatedesign.algorithms.basic;
 public class Point {
     private Double x = null;
     private Double y = null;
-    // 用于存储额外数据，由应用程序自己定义
+    // TODO 用于存储额外数据，由应用程序自己定义。这种做法不是很好，所以希望以后改进
     private Object tag;
 
     public Point() {

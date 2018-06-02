@@ -9,6 +9,8 @@ import java.util.Set;
 
 /**
  * Created by Developer on 18-6-1.
+ * <p>
+ * TODO 本算法对外提供的接口还不够直观，建议修改
  */
 public class MarkovAlgorithms {
     // 样本点
@@ -57,6 +59,8 @@ public class MarkovAlgorithms {
     }
 
     /**
+     * TODO 之前的代码在这里把传入的 data 修改了，这样做是一种很愚蠢的行为。kotlin　针对这种行为做了处理
+     *
      * 预测状态概率,传进来的是带时间的测试数据
      *
      * @param data
@@ -73,10 +77,11 @@ public class MarkovAlgorithms {
         predictValueMatrix = new double[dataTest.size() - markovStage][statusCounts];
         // 这里很关键，权重和滞时的关系要颠倒，循环计算的时候要注意
         int index = 0;
-        while (dataTest.size() > markovStage) {
+        int predictFrom = 0;
+        while (dataTest.size() > predictFrom + markovStage) {
             // 先设置用于预测的基本数据
             for (int i = 0; i < markovStage; i++) {
-                basicData[i] = dataTest.get(i);
+                basicData[i] = dataTest.get(i + predictFrom);
             }
             for (int i = 0; i < statusCounts; i++) {
                 // ｉ代表第ｉ个状态
@@ -88,8 +93,7 @@ public class MarkovAlgorithms {
                     }
                 }
             }
-            // 删除第一个元素,依次检验
-            dataTest.remove(0);
+            predictFrom ++;
             index++;
         }
         return predictValueMatrix;
@@ -141,7 +145,7 @@ public class MarkovAlgorithms {
      * 计算相关系数
      */
     private void calculateCorrelationCoefficient() {
-        Double[] exampleDataArray = exampleStatusData.toArray(new Double[exampleStatusData.size()]);
+        Integer[] exampleDataArray = exampleStatusData.toArray(new Integer[exampleStatusData.size()]);
         double average = MathTools.calculateSum(exampleDataArray) / (double) exampleStatusData.size();
         double variance = MathTools.calculateSum(exampleDataArray);
         selfCorrelationCoefficient = new double[markovStage];

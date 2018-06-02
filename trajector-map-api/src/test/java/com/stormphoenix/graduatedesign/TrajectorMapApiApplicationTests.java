@@ -2,6 +2,7 @@ package com.stormphoenix.graduatedesign;
 
 import com.alicloud.openservices.tablestore.SyncClient;
 import com.alicloud.openservices.tablestore.model.*;
+import com.stormphoenix.graduatedesign.algorithms.MarkovAlgorithms;
 import com.stormphoenix.graduatedesign.constants.Constants;
 import com.stormphoenix.graduatedesign.hotpoint.HotpointMap;
 import org.junit.Test;
@@ -10,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RunWith(SpringRunner.class)
@@ -43,8 +45,8 @@ public class TrajectorMapApiApplicationTests {
         // 设置起始主键
         PrimaryKeyBuilder primaryKeyBuilder = PrimaryKeyBuilder.createPrimaryKeyBuilder();
         primaryKeyBuilder.addPrimaryKeyColumn(COLUMN_USER_ID, PrimaryKeyValue.fromString("032"));
-        primaryKeyBuilder.addPrimaryKeyColumn(COLUMN_TRAJECTORY_ID, PrimaryKeyValue.fromLong(1228318146000L));
-        primaryKeyBuilder.addPrimaryKeyColumn(COLUMN_TIMESTAMP, PrimaryKeyValue.fromLong(1228318146000L));
+        primaryKeyBuilder.addPrimaryKeyColumn(COLUMN_TRAJECTORY_ID, PrimaryKeyValue.fromLong(1228318140000L));
+        primaryKeyBuilder.addPrimaryKeyColumn(COLUMN_TIMESTAMP, PrimaryKeyValue.fromLong(1228318140000L));
         rangeRowQueryCriteria.setInclusiveStartPrimaryKey(primaryKeyBuilder.build());
 //         设置结束主键
         primaryKeyBuilder = PrimaryKeyBuilder.createPrimaryKeyBuilder();
@@ -108,5 +110,23 @@ public class TrajectorMapApiApplicationTests {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void runMarkov() {
+        List<Integer> dataList = new ArrayList();
+        int markovStage = 2;
+        int statusCounts = 6;
+        String dataStr = "0,4,4,5,2,4,0,1,2,0,5,0,4,4,0,5,3,0,5,2,5,3,3,4,4,4,1,1,1,1,3,"
+                + "5,0,5,5,5,5,4,0,5,4,1,3,1,3,1,3,1,2,5,2,2,5,"
+                + "5,1,4,4,2,0,1,5,4,0,3,2,2,0,4,4,4,4,3,1,5,3,1,2,0,5,3,0"
+                + ",3,0,4,0,2,4,4,0,3,3,0,2,0,1,3,2,2,0,0,4,4,3,1,4,1,2,0,4,4,1,2";
+        String[] splitedData = dataStr.split(",");
+        for (String statusStr : splitedData) {
+            dataList.add(Integer.parseInt(statusStr));
+        }
+        MarkovAlgorithms markovAlgorithms = new MarkovAlgorithms(dataList, statusCounts, markovStage);
+        double[][] probablities = markovAlgorithms.predictProbablities(dataList);
+        MarkovResultTest.rightRateTotal(probablities, dataList, markovStage);
     }
 }
