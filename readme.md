@@ -19,4 +19,6 @@ https://github.com/StormPhoenix/TrajectorMapProj
 
 ３．效果展示
 =
-在浏览器中访问 http://localhost:8081/[路径]，方括号的路径是根据你要使用的功能而决定的，这个在trajector-map-web模块的MapController.java文件中可找到。
+在浏览器中访问 http://localhost:8081/[路径]
+
+方括号的路径是根据你要使用的功能而决定的，这个在trajector-map-web模块的MapController.java文件中可找到。
