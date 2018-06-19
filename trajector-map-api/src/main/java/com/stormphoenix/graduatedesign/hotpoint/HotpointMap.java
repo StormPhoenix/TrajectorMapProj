@@ -13,6 +13,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by Developer on 18-5-25.
  */
 public class HotpointMap {
+    public static AtomicInteger readCount = new AtomicInteger(0);
+    public static AtomicInteger writeCount = new AtomicInteger(0);
+
     private static HotpointMap INSTANCE;
     private static final Long TIME_SCALE = 5000L;
     private Integer width;
@@ -90,6 +93,13 @@ public class HotpointMap {
      * 这里暂时采取写锁优先的策略
      */
     private void offerHotpointTask(Hotpoint hotpoint) {
+        // ---------------- 未采用优化代码 --------------------
+//        synchronized (firstQueue) {
+//            firstQueue.offer(hotpoint);
+//            readCount.incrementAndGet();
+//            hotpointMap[hotpoint.getRowIndex()][hotpoint.getColIndex()].incrementAndGet();
+//        }
+        // ---------------- 未采用优化代码 --------------------
         int count;
         switchLock.lock();
         if (!isSwitch) {
@@ -106,6 +116,7 @@ public class HotpointMap {
             }
             firstMutex.unlock();
             firstQueue.offer(hotpoint);
+            readCount.incrementAndGet();
             hotpointMap[hotpoint.getRowIndex()][hotpoint.getColIndex()].incrementAndGet();
             firstMutex.lock();
             count = firstReaderCount.decrementAndGet();
@@ -123,6 +134,7 @@ public class HotpointMap {
             }
             secondMutex.unlock();
             secondQueue.offer(hotpoint);
+            readCount.incrementAndGet();
             hotpointMap[hotpoint.getRowIndex()][hotpoint.getColIndex()].incrementAndGet();
             secondMutex.lock();
             count = secondReaderCount.decrementAndGet();
@@ -134,6 +146,21 @@ public class HotpointMap {
     }
 
     private void pollHotpointTask() {
+        // ---------------- 未采用优化代码 --------------------
+//        while (true) {
+//            synchronized (firstQueue) {
+//                while (!firstQueue.isEmpty()) {
+//                    Hotpoint hotpoint = firstQueue.peek();
+//                    if (System.currentTimeMillis() - hotpoint.getTimestamp() >= TIME_SCALE) {
+//                        hotpointMap[hotpoint.getRowIndex()][hotpoint.getColIndex()].decrementAndGet();
+//                        firstQueue.poll();
+//                        writeCount.incrementAndGet();
+//                    }
+//                }
+//            }
+//        }
+        // ---------------- 未采用优化代码 --------------------
+
         while (true) {
             if (isSwitch) {
                 // use firstQueue
@@ -147,6 +174,7 @@ public class HotpointMap {
                     if (System.currentTimeMillis() - hotpoint.getTimestamp() >= TIME_SCALE) {
                         hotpointMap[hotpoint.getRowIndex()][hotpoint.getColIndex()].decrementAndGet();
                         firstQueue.poll();
+                        writeCount.incrementAndGet();
                     }
                 }
                 firstQueueSemaphore.release();
@@ -162,6 +190,7 @@ public class HotpointMap {
                     if (System.currentTimeMillis() - hotpoint.getTimestamp() >= 5000) {
                         hotpointMap[hotpoint.getRowIndex()][hotpoint.getColIndex()].decrementAndGet();
                         secondQueue.poll();
+                        writeCount.incrementAndGet();
                     }
                 }
                 secondQueueSemaphore.release();

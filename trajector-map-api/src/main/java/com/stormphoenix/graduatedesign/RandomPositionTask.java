@@ -31,7 +31,7 @@ public class RandomPositionTask implements Runnable {
             currentHeight = Math.random() * (heightEnd - heightFrom) + heightFrom;
             hotpointMap.addHotpoint((int) ((currentHeight - heightFrom) / gridScale), (int) ((currentWidht - widthFrom) / gridScale));
             try {
-                Thread.sleep(5000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

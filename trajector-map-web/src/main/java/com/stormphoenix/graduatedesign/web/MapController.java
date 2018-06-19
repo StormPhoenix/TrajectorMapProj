@@ -15,8 +15,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class MapController {
     private Logger logger = LoggerFactory.getLogger(MapController.class);
 
-    @RequestMapping(value = "/trajector", method = RequestMethod.GET)
+    @RequestMapping(value = "/single_user_query", method = RequestMethod.GET)
+    public String singleUserQuery() {
+        return "trajector_map1";
+    }
+
+    @RequestMapping(value = "/muti_user_cut_query", method = RequestMethod.GET)
     public String trajectorMap() {
         return "trajector_map";
+    }
+
+    @RequestMapping(value = "/muti_user_cut_query_without_redis", method = RequestMethod.GET)
+    public String multiUserQueryWithoutRedis() {
+        return "trajector_map2";
     }
 }

@@ -67,7 +67,7 @@ public class TrajectorMapApiApplicationTests {
 
     @Test
     public void showHotpoint() {
-        int threadCount = 5000;
+        int threadCount = 541;
         int count = 0;
         double widthFrom = 100;
         double widthEnd = 120;
@@ -85,24 +85,40 @@ public class TrajectorMapApiApplicationTests {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                int[][] map;
-                int count = 0;
-                while (count < 100) {
-                    map = hotpointMap.getHotpointMap();
-                    for (int row = 0; row < width; row++) {
-                        for (int col = 0; col < height; col++) {
-                            System.out.print(map[row][col] + " ");
-                        }
-                        System.out.println();
+                // －－－－－－－－－－－－　性能统计　－－－－－－－－－－－－－
+                try {
+                    int time = 0;
+                    while (time < 200) {
+                        Thread.sleep(2000);
+                        time += 2;
+                        System.out.println("第 " + time + " 秒统计：读　" + HotpointMap.readCount.get() + " 次，写　" + HotpointMap.writeCount + " 次");
                     }
-                    System.out.println("--------------------------");
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    count++;
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
                 }
+                // －－－－－－－－－－－－　性能统计　－－－－－－－－－－－－－
+
+                // －－－－－－－－－－－－　热点示意　－－－－－－－－－－－－－
+//                int showCount = 0;
+//                int[][] map;
+//                int count = 0;
+//                while (count < 100) {
+//                    map = hotpointMap.getHotpointMap();
+//                    System.out.println("-------------　第　" + ++showCount + "　次热点展示　-------------");
+//                    for (int row = 0; row < width; row++) {
+//                        for (int col = 0; col < height; col++) {
+//                            System.out.print(map[row][col] + " ");
+//                        }
+//                        System.out.println();
+//                    }
+//                    try {
+//                        Thread.sleep(5000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                    count++;
+//                }
+                // －－－－－－－－－－－－　热点示意　－－－－－－－－－－－－－
             }
         }).start();
         try {
@@ -115,7 +131,7 @@ public class TrajectorMapApiApplicationTests {
     @Test
     public void runMarkov() {
         List<Integer> dataList = new ArrayList();
-        int markovStage = 2;
+        int markovStage = 5;
         int statusCounts = 6;
         String dataStr = "0,4,4,5,2,4,0,1,2,0,5,0,4,4,0,5,3,0,5,2,5,3,3,4,4,4,1,1,1,1,3,"
                 + "5,0,5,5,5,5,4,0,5,4,1,3,1,3,1,3,1,2,5,2,2,5,"
