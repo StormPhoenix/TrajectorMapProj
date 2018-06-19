@@ -22,3 +22,7 @@ https://github.com/StormPhoenix/TrajectorMapProj
 在浏览器中访问 http://localhost:8081/[路径]
 
 方括号的路径是根据你要使用的功能而决定的，这个在trajector-map-web模块的MapController.java文件中可找到。
+
+４．其他
+=
+DeepST项目的启动步骤在DeepST_doc.md文件中有说明，这个文件在本项目根目录中可以找到。
